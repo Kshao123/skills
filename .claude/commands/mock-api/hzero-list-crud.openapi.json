@@ -1,0 +1,306 @@
+{
+  "_comment": "hzero-front / c7n list-page CRUD mock skeleton. Usage: copy to the system temp directory, replace Xxx / xxx / <entity> with the entity name, replace XxxVO.properties and XxxSaveDTO.properties with the page's real fields, delete this _comment and every _note, then import. Do not change the paging envelope, the array request bodies, or the create/update/destroy status codes.",
+  "openapi": "3.0.1",
+  "info": {
+    "title": "<page name>",
+    "version": "1.0.0"
+  },
+  "tags": [{ "name": "<module>/<page-dir>" }],
+  "paths": {
+    "/getXxx": {
+      "get": {
+        "summary": "getXxx",
+        "description": "<page name> - list query (paged)",
+        "tags": ["<module>/<page-dir>"],
+        "x-apifox-folder": "<module>/<page-dir>",
+        "x-apifox-status": "developing",
+        "deprecated": false,
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "page index, zero-based",
+            "required": false,
+            "schema": { "type": "integer", "default": 0 }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "rows per page",
+            "required": false,
+            "schema": { "type": "integer", "default": 10 }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "sort expression, default createTime,DESC",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "_note": "Add one parameter per queryFields entry below. A RangePreset expands into xxxStart and xxxEnd. For a lov field use the bound account/code field name.",
+            "name": "advancedQueryString",
+            "in": "query",
+            "description": "advanced query conditions, JSON string",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "paged data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/XxxVO" },
+                      "minItems": 10,
+                      "maxItems": 10
+                    },
+                    "empty": { "type": "boolean", "x-apifox-mock": "false" },
+                    "number": { "type": "integer", "x-apifox-mock": "0" },
+                    "numberOfElements": { "type": "integer", "x-apifox-mock": "10" },
+                    "size": { "type": "integer", "x-apifox-mock": "10" },
+                    "totalElements": { "type": "integer", "x-apifox-mock": "10" },
+                    "totalPages": { "type": "integer", "x-apifox-mock": "1" }
+                  },
+                  "required": [
+                    "content",
+                    "empty",
+                    "number",
+                    "numberOfElements",
+                    "size",
+                    "totalElements",
+                    "totalPages"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/createXxx": {
+      "post": {
+        "summary": "createXxx",
+        "description": "<page name> - create (DataSet submit; body is an array of records)",
+        "tags": ["<module>/<page-dir>"],
+        "x-apifox-folder": "<module>/<page-dir>",
+        "x-apifox-status": "developing",
+        "deprecated": false,
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/XxxSaveDTO" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "xxxId": {
+                      "type": "string",
+                      "description": "primary key",
+                      "x-apifox-mock": "@integer(100000,999999)"
+                    }
+                  },
+                  "required": ["xxxId"]
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/updateXxx": {
+      "put": {
+        "summary": "updateXxx",
+        "description": "<page name> - update (DataSet submit; body is an array of records)",
+        "tags": ["<module>/<page-dir>"],
+        "x-apifox-folder": "<module>/<page-dir>",
+        "x-apifox-status": "developing",
+        "deprecated": false,
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/XxxSaveDTO" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "updated" }
+        },
+        "security": []
+      }
+    },
+    "/destroyXxx": {
+      "delete": {
+        "summary": "destroyXxx",
+        "description": "<page name> - delete (DataSet submit; body is an array of records)",
+        "tags": ["<module>/<page-dir>"],
+        "x-apifox-folder": "<module>/<page-dir>",
+        "x-apifox-status": "developing",
+        "deprecated": false,
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/XxxSaveDTO" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": { "description": "deleted" }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "XxxVO": {
+        "type": "object",
+        "title": "XxxVO",
+        "description": "<page name> list row. The properties below are example shapes; add and remove to match the page's columns + fields.",
+        "properties": {
+          "xxxId": {
+            "type": "string",
+            "description": "primary key",
+            "x-apifox-mock": "@integer(100000,999999)"
+          },
+          "lovObject": {
+            "_note": "For LovBindFieldsPreset: a DataSet field bound to 'lovObject.xxx' must be returned nested here. Do not also flatten it. Rename the property to the real lov field name (e.g. supplier).",
+            "type": "object",
+            "description": "lov source object",
+            "properties": {
+              "codeField": {
+                "type": "string",
+                "description": "code",
+                "x-apifox-mock": "SUP@integer(10000,99999)"
+              },
+              "nameField": {
+                "type": "string",
+                "description": "name",
+                "x-apifox-mock": "@ctitle(3,6)有限公司"
+              }
+            },
+            "required": ["codeField", "nameField"]
+          },
+          "booleanFlag": {
+            "_note": "A BooleanTypePreset() field uses integer 0/1, not true/false.",
+            "type": "integer",
+            "description": "flag: 1 yes / 0 no",
+            "enum": [0, 1],
+            "x-apifox-mock": "@pick([0,1])"
+          },
+          "lookupField": {
+            "_note": "lookupCode / lovCode fields return the code string, never the meaning. Align the enum with the value set.",
+            "type": "string",
+            "description": "value-set field",
+            "enum": ["1", "2"],
+            "x-apifox-mock": "@pick(['1','2'])"
+          },
+          "statisticsYear": {
+            "type": "string",
+            "description": "year (type: 'year' → YYYY)",
+            "x-apifox-mock": "2026"
+          },
+          "statisticsMonth": {
+            "_note": "Months must belong to the year above — do not pair 2026 with 2025-xx. Regenerate both from today's date.",
+            "type": "string",
+            "description": "month (type: 'month' → YYYY-MM)",
+            "x-apifox-mock": "@pick(['2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08'])"
+          },
+          "amount": {
+            "type": "number",
+            "description": "amount",
+            "x-apifox-mock": "@float(1000,9999999,2,2)"
+          },
+          "totalQuantity": {
+            "_note": "Upstream of a computed column: the ranges must keep subQuantity below totalQuantity, or the difference goes negative and the ratio exceeds 100%.",
+            "type": "integer",
+            "description": "total (computed-column upstream)",
+            "x-apifox-mock": "@integer(80,100)"
+          },
+          "subQuantity": {
+            "type": "integer",
+            "description": "qualified count (always below the total)",
+            "x-apifox-mock": "@integer(60,80)"
+          },
+          "account": {
+            "type": "string",
+            "description": "account field",
+            "x-apifox-mock": "@pick(['zhangsan','lisi','wangwu','zhaoliu'])"
+          },
+          "remark": {
+            "type": "string",
+            "description": "remark",
+            "x-apifox-mock": "@ctitle(4,10)"
+          },
+          "creatorAccount": {
+            "type": "string",
+            "description": "created by",
+            "x-apifox-mock": "@pick(['zhangsan','lisi','wangwu','zhaoliu'])"
+          },
+          "createTime": {
+            "_note": "Never a bare @datetime() — it emits 1998 and future dates. List a few fixed past datetimes instead.",
+            "type": "string",
+            "description": "creation time",
+            "x-apifox-mock": "@pick(['2026-08-01 09:12:30','2026-08-05 14:22:10','2026-07-18 10:05:44','2026-06-30 16:41:02','2026-05-11 08:30:00'])"
+          }
+        },
+        "required": ["xxxId"]
+      },
+      "XxxSaveDTO": {
+        "type": "object",
+        "title": "XxxSaveDTO",
+        "description": "<page name> write payload. Only editable fields (editor: true) plus the primary key. Fields with ignore: FieldIgnore.always are excluded; for a lov object use the bound flattened field.",
+        "properties": {
+          "xxxId": {
+            "type": "string",
+            "description": "primary key; omitted when creating"
+          },
+          "codeField": {
+            "type": "string",
+            "description": "code"
+          },
+          "totalQuantity": {
+            "type": "integer",
+            "description": "total"
+          },
+          "remark": {
+            "type": "string",
+            "description": "remark"
+          }
+        },
+        "required": ["codeField", "totalQuantity"]
+      }
+    }
+  },
+  "servers": [],
+  "security": []
+}

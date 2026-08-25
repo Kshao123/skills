@@ -1,0 +1,146 @@
+{
+  "_comment": "Generic Apifox mock skeleton. Copy to the system temp directory, replace every <placeholder> and the Example* names, delete this _comment, then import. Framework-specific response envelopes belong in a project command's own template, not here.",
+  "openapi": "3.0.1",
+  "info": {
+    "title": "<feature name>",
+    "version": "1.0.0"
+  },
+  "tags": [{ "name": "<folder>/<subfolder>" }],
+  "paths": {
+    "/getExample": {
+      "get": {
+        "summary": "getExample",
+        "description": "<feature name> - query",
+        "tags": ["<folder>/<subfolder>"],
+        "x-apifox-folder": "<folder>/<subfolder>",
+        "x-apifox-status": "developing",
+        "deprecated": false,
+        "parameters": [
+          {
+            "name": "exampleCode",
+            "in": "query",
+            "description": "<what this filters on>",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ExampleVO" }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/createExample": {
+      "post": {
+        "summary": "createExample",
+        "description": "<feature name> - create",
+        "tags": ["<folder>/<subfolder>"],
+        "x-apifox-folder": "<folder>/<subfolder>",
+        "x-apifox-status": "developing",
+        "deprecated": false,
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ExampleSaveDTO" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "exampleId": {
+                      "type": "string",
+                      "description": "primary key",
+                      "x-apifox-mock": "@integer(100000,999999)"
+                    }
+                  },
+                  "required": ["exampleId"]
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ExampleVO": {
+        "type": "object",
+        "title": "ExampleVO",
+        "description": "One row. The five properties below demonstrate the value styles; replace them with the real fields.",
+        "properties": {
+          "exampleId": {
+            "_note": "Pinned literal: a rule expression is always a string, even for an integer field.",
+            "type": "integer",
+            "description": "primary key",
+            "x-apifox-mock": "0"
+          },
+          "exampleCode": {
+            "_note": "Literal prefix composed with a placeholder, so the code looks like the real thing.",
+            "type": "string",
+            "description": "business code",
+            "x-apifox-mock": "EX@integer(10000,99999)"
+          },
+          "statusCode": {
+            "_note": "enum mirrored by @pick with matching element types.",
+            "type": "string",
+            "description": "status",
+            "enum": ["1", "2", "3"],
+            "x-apifox-mock": "@pick(['1','2','3'])"
+          },
+          "quantity": {
+            "_note": "Bounded range. Narrow it further if another field is derived from it.",
+            "type": "integer",
+            "description": "quantity",
+            "x-apifox-mock": "@integer(80,100)"
+          },
+          "createTime": {
+            "_note": "Fixed past datetimes. Never a bare @datetime() — it emits 1998 and future dates. Regenerate these from today's date.",
+            "type": "string",
+            "description": "creation time",
+            "x-apifox-mock": "@pick(['2026-08-01 09:12:30','2026-07-18 10:05:44','2026-06-30 16:41:02'])"
+          }
+        },
+        "required": ["exampleId", "exampleCode"]
+      },
+      "ExampleSaveDTO": {
+        "type": "object",
+        "title": "ExampleSaveDTO",
+        "description": "Write payload. Editable fields plus the primary key; no mock rules — request schemas are not mocked.",
+        "properties": {
+          "exampleId": {
+            "type": "integer",
+            "description": "primary key; omitted when creating"
+          },
+          "exampleCode": {
+            "type": "string",
+            "description": "business code"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "quantity"
+          }
+        },
+        "required": ["exampleCode"]
+      }
+    }
+  },
+  "servers": [],
+  "security": []
+}

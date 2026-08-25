@@ -23,6 +23,11 @@ and their supporting `references/`, `scripts/`, and `assets/` directories.
 - Do not add runtime dependencies. The validator is plain Node.js with no
   packages, and CI must stay that way.
 - When adding or changing a skill, update the skills table in `README.md`.
+- Slash commands live in `.claude/commands/<name>.md`, with companion data in a
+  same-named subdirectory (`.claude/commands/<name>/`). They are not discovered by
+  `scripts/validate-skills.mjs`, which only walks `skills/` for `SKILL.md`.
+- Split along reuse: mechanics that work in any project belong in a skill;
+  framework- or project-specific conventions belong in a command that loads it.
 
 ## Verify before finishing
 
