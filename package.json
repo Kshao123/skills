@@ -1,0 +1,19 @@
+{
+  "name": "skills",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Agent Skills published to the skills.sh ecosystem",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kshao123/skills.git"
+  },
+  "scripts": {
+    "validate": "node scripts/validate-skills.mjs",
+    "list": "npx -y skills add . --list"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

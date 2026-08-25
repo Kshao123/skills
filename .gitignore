@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+
+# Skills installed into this repo by `npx skills add` (symlinks/copies)
+.agents/skills/
+.claude/skills/
+.cursor/skills/
+.codex/skills/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local scratch
+*.log
+.env
+.env.*
+tmp/

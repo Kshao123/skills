@@ -1,0 +1,25 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Spec + discovery checks, zero dependencies.
+      - name: Validate SKILL.md files
+        run: node scripts/validate-skills.mjs
+
+      # Confirms the real skills.sh CLI discovers every skill in this repo.
+      - name: Check discovery with the skills CLI
+        run: npx -y skills@1 add . --list
