@@ -67,8 +67,9 @@ curl -s -X POST "https://api.apifox.com/v1/projects/$PID/import-openapi?locale=z
 
 On Windows, Git Bash's `/tmp` is not the path `node` sees — `node` resolves `/tmp`
 against the drive root. Pass the translated path in (`cygpath -w /tmp`) and let
-`node` join it, as above. `scripts/apifox-import.mjs` does this internally, which
-is why the pipeline prefers it over hand-rolled one-liners.
+`node` join it, as above. `scripts/apifox.mjs` does this internally, which is why
+the pipeline prefers `node scripts/apifox.mjs import <file> --yes` over
+hand-rolled one-liners.
 
 ## Import response
 
@@ -122,8 +123,10 @@ without it there is nothing to parse.
 ```
 
 Extract the id with `/api-(\d+)-run/`. Filter to the endpoints you care about by
-`x-apifox-folder`. `scripts/apifox-api-ids.mjs` does export, filter, print, and
-temp-file cleanup in one process.
+`x-apifox-folder`. `node scripts/apifox.mjs import <file> --yes` already runs this
+export after a successful import and prints the ids; `node scripts/apifox.mjs ids`
+runs it alone. Both write the dump to a temp file, filter it, and delete it in one
+process.
 
 ## Mock URL anatomy
 
