@@ -1,5 +1,5 @@
 {
-  "_comment": "Generic Apifox mock skeleton. Copy to the system temp directory, replace every <placeholder> and the Example* names, delete this _comment, then import. Framework-specific response envelopes belong in a project command's own template, not here.",
+  "_comment": "Minimal Apifox mock skeleton: one query + one create. Copy to the system temp directory, replace every <placeholder> and the Example* names, then import — scripts/apifox.mjs strips _comment and _note keys for you. For a paged list use assets/paged-list.openapi.json; for more field rules see references/examples.md.",
   "openapi": "3.0.1",
   "info": {
     "title": "<feature name>",

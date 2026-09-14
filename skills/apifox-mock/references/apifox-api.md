@@ -44,32 +44,20 @@ The OAS document goes in as a **string**, not as a nested object:
 | `prependBasePath` | Keep `false`; `true` prefixes `servers[0].url` onto every path |
 
 Build the body with `node` and post the file — never interpolate JSON into a
-command line, where quoting will corrupt it:
+command line, where quoting will corrupt it. `scripts/apifox.mjs import` does
+exactly this; only hand-roll it when the script itself is unusable:
 
 ```bash
-node -e "
-const fs=require('fs'),p=require('path'),d=process.argv[1];
-const input=fs.readFileSync(p.join(d,'apifox-oas.json'),'utf8');
-JSON.parse(input);
-fs.writeFileSync(p.join(d,'apifox-import-body.json'),JSON.stringify({input,options:{
-  endpointOverwriteBehavior:'OVERWRITE_EXISTING',
-  schemaOverwriteBehavior:'OVERWRITE_EXISTING',
-  updateFolderOfChangedEndpoint:true,
-  prependBasePath:false
-}}));" "$(cygpath -w /tmp)"
-
 curl -s -X POST "https://api.apifox.com/v1/projects/$PID/import-openapi?locale=zh-CN" \
   -H "Authorization: Bearer $TOKEN" \
   -H "X-Apifox-Api-Version: 2024-03-28" \
   -H "Content-Type: application/json" \
-  --data-binary @/tmp/apifox-import-body.json
+  --data-binary @"$BODY_FILE"
 ```
 
 On Windows, Git Bash's `/tmp` is not the path `node` sees — `node` resolves `/tmp`
-against the drive root. Pass the translated path in (`cygpath -w /tmp`) and let
-`node` join it, as above. `scripts/apifox.mjs` does this internally, which is why
-the pipeline prefers `node scripts/apifox.mjs import <file> --yes` over
-hand-rolled one-liners.
+against the drive root. Translate it with `cygpath -w /tmp` before handing it to
+`node`.
 
 ## Import response
 
@@ -123,10 +111,8 @@ without it there is nothing to parse.
 ```
 
 Extract the id with `/api-(\d+)-run/`. Filter to the endpoints you care about by
-`x-apifox-folder`. `node scripts/apifox.mjs import <file> --yes` already runs this
-export after a successful import and prints the ids; `node scripts/apifox.mjs ids`
-runs it alone. Both write the dump to a temp file, filter it, and delete it in one
-process.
+`x-apifox-folder`. `scripts/apifox.mjs` runs this export for `import`, `ids` and
+`folders`, filtering the dump on disk and deleting it in one process.
 
 ## Mock URL anatomy
 
@@ -147,16 +133,11 @@ https://m1.apifoxmock.com/m2/<projectId>-<mockId>-default/<apiId>
 
 ## Reading a project's conventions
 
-Before inventing folder names, path styles, or schema names, read what the project
-already uses through the read-only MCP tool:
-
-```
-mcp__apifox-mcp__read_project_oas_*
-```
-
-The name ends in a per-session hash (`…_76tcbp` and `…_d8cqjl` have both been seen
-for the same project). Always match it with a wildcard; never hardcode a suffix. If
-the tool is missing, re-list the available tools rather than guessing the name.
+`node scripts/apifox.mjs folders` prints every `x-apifox-folder` with an endpoint
+count and sample paths — enough to match folder layout and path style. Only fall
+back to the MCP tool `mcp__apifox-mcp__read_project_oas_*` when you also need
+schema names; it returns the entire project OAS. Its name ends in a per-session
+hash — match it with a wildcard, never hardcode a suffix.
 
 ## Vendor extensions
 

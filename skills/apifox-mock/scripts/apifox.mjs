@@ -6,6 +6,9 @@
 //       every operation it declares — one call instead of import + lookup.
 //   node apifox.mjs ids [--folder=<f>] [--path=<s>] [--mock-base=<url>]
 //       Look up ids of endpoints that already exist. Read-only.
+//   node apifox.mjs folders
+//       List the project's folders with a few sample paths each, so an agent can
+//       match existing conventions without reading the whole project OAS.
 //
 // Credentials are read at run time and never printed. No dependencies; Node 18+.
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -26,6 +29,7 @@ const METHODS = new Set(['get', 'post', 'put', 'patch', 'delete', 'head', 'optio
 const USAGE = `Usage:
   node apifox.mjs import <oas-file> --yes [--mock-base=<url>]
   node apifox.mjs ids [--folder=<folder>] [--path=<substring>] [--mock-base=<url>]
+  node apifox.mjs folders
 
   --yes               Actually import; without it the command dry-runs
   --mock-base=<url>   Prefix for printed mock URLs; else APIFOX_MOCK_BASE
@@ -34,7 +38,8 @@ const USAGE = `Usage:
   --path=<substring>  ids: keep paths containing this substring
   --help
 
-Both commands print a "METHOD  path  apiId  mockUrl" table. The token is read
+import and ids print a "METHOD  path  apiId  mockUrl" table. import drops every
+"_comment" / "_note" key from the document before sending it. The token is read
 from APIFOX_ACCESS_TOKEN, else from the apifox-mcp entry in ~/.claude.json, and
 is never printed.`;
 
@@ -93,6 +98,20 @@ async function post({ projectId, token }, endpoint, body) {
   return text;
 }
 
+// Drop the authoring-only keys the bundled skeletons carry, so a copied
+// skeleton can be imported without a manual clean-up pass.
+function stripNotes(value) {
+  if (Array.isArray(value)) return value.map(stripNotes);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([k]) => k !== '_comment' && k !== '_note')
+        .map(([k, v]) => [k, stripNotes(v)]),
+    );
+  }
+  return value;
+}
+
 // Every real operation in a paths object, skipping path-level keys such as
 // parameters, summary, description, servers and x-*.
 function operations(paths) {
@@ -144,8 +163,8 @@ async function runImport(file, mockBase) {
   let input;
   let doc;
   try {
-    input = readFileSync(file, 'utf8');
-    doc = JSON.parse(input);
+    doc = stripNotes(JSON.parse(readFileSync(file, 'utf8')));
+    input = JSON.stringify(doc);
   } catch (err) {
     fail(`Cannot read or parse ${file}: ${err.message}`);
   }
@@ -203,6 +222,19 @@ async function runIds(mockBase) {
   printRows(rows, mockBase);
 }
 
+async function runFolders() {
+  const byFolder = new Map();
+  for (const r of await endpoints(credentials())) {
+    const list = byFolder.get(r.folder) ?? [];
+    list.push(`${r.method} ${r.path}`);
+    byFolder.set(r.folder, list);
+  }
+  for (const [folder, list] of [...byFolder].sort(([a], [b]) => a.localeCompare(b))) {
+    const sample = list.slice(0, 3).join(', ') + (list.length > 3 ? ', …' : '');
+    console.log(`${folder || '(root)'}  (${list.length})  ${sample}`);
+  }
+}
+
 const command = positional[0];
 const mockBase = (arg('mock-base') ?? env.APIFOX_MOCK_BASE ?? '').replace(/\/+$/, '');
 
@@ -213,6 +245,8 @@ if (flag('help') || !command) {
   await runImport(positional[1], mockBase);
 } else if (command === 'ids') {
   await runIds(mockBase);
+} else if (command === 'folders') {
+  await runFolders();
 } else {
   fail(`Unknown command "${command}".\n\n${USAGE}`);
 }

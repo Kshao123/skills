@@ -1,94 +1,53 @@
 # Mock value rules
 
-How to make an Apifox mock return values a frontend can actually render. The
-mechanics are [Mock.js](http://mockjs.com/examples.html); the discipline is making
-several independent random fields stay consistent with each other.
+Why a mock value is right or wrong. Ready-made rules for every common field are
+in [examples.md](examples.md); read this when you have to design one yourself,
+or when several fields must agree.
 
 ## Where rules live
 
-`x-apifox-mock` goes on a **schema property**, never on the operation:
+`x-apifox-mock` goes on a **schema property** under `components.schemas`, never
+on the operation. Because of that, editing only mock values produces
+`endpointIgnored` + `schemaUpdated: 1` on import — that is success.
 
-```json
-"components": {
-  "schemas": {
-    "ExampleVO": {
-      "type": "object",
-      "properties": {
-        "quantity": { "type": "integer", "x-apifox-mock": "@integer(1,99)" }
-      }
-    }
-  }
-}
-```
-
-Because the rule lives on the schema, editing only mock values produces
-`endpointIgnored` + `schemaUpdated: 1` on import. That is success.
-
-## Literals
-
-A fixed value is a plain string, whatever the declared type:
-
-```json
-"number":        { "type": "integer", "x-apifox-mock": "0" }
-"empty":         { "type": "boolean", "x-apifox-mock": "false" }
-"currencyCode":  { "type": "string",  "x-apifox-mock": "CNY" }
-```
-
-Do not write `0` or `false` unquoted — the value is a rule expression, not a JSON
-value.
+A rule is always a string, even when the property is a number or boolean:
+`"0"`, `"false"`, `"CNY"`. Unquoted `0` or `false` is a JSON value, not a rule.
 
 ## Placeholders
 
-| Placeholder | Produces | Note |
-| --- | --- | --- |
-| `@integer(min,max)` | Integer in range, inclusive | Pin ranges; the default range is huge |
-| `@float(min,max,dmin,dmax)` | Decimal | `@float(1000,9999999,2,2)` = money with exactly 2 decimals |
-| `@pick([a,b,c])` | One list element | The only safe way to honour an `enum` |
-| `@ctitle(min,max)` | Chinese words | For names and remarks |
-| `@cname()` | Chinese personal name | |
-| `@string(min,max)` | Random ASCII | Rarely what a UI wants; prefer `@pick` |
-| `@boolean()` | `true` / `false` | Not for `0`/`1` flag fields |
+[Mock.js](http://mockjs.com/examples.html) syntax. The ones that matter, and
+their traps:
 
-Literals and placeholders compose, which is how prefixed codes work:
-
-```json
-"supplierCode": { "type": "string", "x-apifox-mock": "SUP@integer(10000,99999)" }
-"companyName":  { "type": "string", "x-apifox-mock": "@ctitle(3,6)有限公司" }
-```
+- `@integer(min,max)` / `@float(min,max,dmin,dmax)` — always pin the range; the
+  default is enormous.
+- `@pick([...])` — the only safe way to honour an `enum`. Quote the elements for
+  a string enum, leave them bare for a numeric one; a type mismatch makes the
+  frontend's lookup miss and the cell renders empty rather than failing loudly.
+- `@boolean()` is not for `0`/`1` flag fields; use `@pick([0,1])`.
+- `@string()` is rarely what a UI wants; use `@pick` or a prefixed code.
+- Literals and placeholders compose: `SUP@integer(10000,99999)`,
+  `@ctitle(3,6)有限公司`.
 
 ## Array length
 
-Pin length on the array schema, not with a placeholder:
-
-```json
-"content": {
-  "type": "array",
-  "items": { "$ref": "#/components/schemas/ExampleVO" },
-  "minItems": 10,
-  "maxItems": 10
-}
-```
-
-Equal `minItems` and `maxItems` give a deterministic row count, which is what a
-paging envelope needs — the total fields have to agree with the rows returned.
+Pin length on the array schema with equal `minItems` / `maxItems`, never with a
+placeholder. A deterministic row count is what a paging envelope needs — every
+total has to agree with the rows returned.
 
 ## Consistency without references
 
-**Mock.js cannot reference another field.** There is no expression for "this field
-minus that one". Every rule is evaluated independently, so any invariant between
-fields has to hold for *all* combinations the ranges allow.
-
-Partition the ranges so the invariant cannot break:
+**Mock.js cannot reference another field.** Every rule is evaluated
+independently, so any invariant between fields has to hold for *all* combinations
+the ranges allow. Partition the ranges so the invariant cannot break:
 
 ```json
 "totalCount":    { "type": "integer", "x-apifox-mock": "@integer(80,100)" }
 "achievedCount": { "type": "integer", "x-apifox-mock": "@integer(60,80)" }
 ```
 
-Any draw satisfies `achievedCount <= totalCount`, so a UI column computing
-`totalCount - achievedCount` is never negative and a ratio never exceeds 100%.
-Overlapping ranges — `@integer(1,100)` for both — produce a negative difference
-roughly half the time, and that is what the reviewer will notice first.
+Any draw satisfies `achievedCount <= totalCount`, so `totalCount - achievedCount`
+is never negative and a ratio never exceeds 100%. Overlapping ranges produce a
+negative difference roughly half the time — the first thing a reviewer notices.
 
 Apply the same reasoning to any derived display value: a rate, a remainder, a
 percentage, a date span. Find the computation in the consuming code, then choose
@@ -96,47 +55,15 @@ ranges whose worst case is still legal.
 
 ## Dates
 
-Never use a bare `@datetime()`. Its range spans 1970 to a future year, so it emits
-both 1998 timestamps and dates that have not happened yet — either one looks like a
-bug in the page. Use a `@pick` of fixed values in the recent past:
+Never use a bare `@datetime()`. Its range spans 1970 to a future year, so it
+emits both 1998 timestamps and dates that have not happened yet. Use a `@pick`
+of fixed values in the recent past, generated from **today's date**:
 
-```json
-"createTime": {
-  "type": "string",
-  "x-apifox-mock": "@pick(['2026-08-01 09:12:30','2026-07-18 10:05:44','2026-06-30 16:41:02'])"
-}
-```
-
-Derive the years and months from **today's date when you generate the document** —
-do not copy the ones above. Rules:
-
-- Keep granularity consistent with the field: `'2026'` for a year field,
-  `'2026-08'` for a month field, `'2026-08-01'` for a date, full
-  `'YYYY-MM-DD HH:mm:ss'` for a datetime.
-- Never mix eras across related fields: a year field of `'2026'` must not sit
-  beside a month field listing `'2025-11'`.
-- Only list months up to the current one when the data is meant to be historical.
-
-## Enums
-
-Declare the `enum` and mirror it in `@pick`, with matching types:
-
-```json
-"statusCode": {
-  "type": "string",
-  "enum": ["1", "2", "3"],
-  "x-apifox-mock": "@pick(['1','2','3'])"
-}
-"activeFlag": {
-  "type": "integer",
-  "enum": [0, 1],
-  "x-apifox-mock": "@pick([0,1])"
-}
-```
-
-Quote the list elements for a string enum and leave them bare for a numeric one. A
-mismatch produces values the frontend's lookup cannot resolve, and the cell renders
-empty rather than failing loudly.
+- Match granularity to the field: `'2026'`, `'2026-08'`, `'2026-08-01'`,
+  `'2026-08-01 09:12:30'`.
+- Never mix eras across related fields: a year of `'2026'` must not sit beside a
+  month list containing `'2025-11'`.
+- List only months up to the current one when the data is historical.
 
 ## Determinism checklist
 
@@ -149,4 +76,3 @@ Before importing, walk the schema once:
 - [ ] Every derived or computed display value is legal at both ends of its inputs
 - [ ] No bare `@datetime()`; dates are in the past and share one era
 - [ ] Ids and codes look like the real thing (prefix + digit range), not `@string`
-
